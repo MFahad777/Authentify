@@ -1,5 +1,5 @@
 {
-  "name": "authentify",
+  "name": "secure-tokenize",
   "version": "1.0.0",
   "description": "A simplified authentication package",
   "author": "Muhammad Fahad",
@@ -38,7 +38,7 @@
   },
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/MFahad777/Authentify.git"
+    "url": "git+https://github.com/MFahad777/SecureTokenize.git"
   },
-  "homepage": "https://github.com/MFahad777/Authentify#readme"
+  "homepage": "https://github.com/MFahad777/SecureTokenize#readme"
 }
