@@ -4,9 +4,9 @@ const exp = require("express");
 
 const app = exp();
 
-const auth = new Authentication("AnewSecretToHaveInCommon");
+const auth = new Authentication("AnewSecretToHaveInCommon", "jwt");
 
-auth.generateToken({
+const token = auth.generateToken({
     userName:"johnDoe6978594",
     firstName:"John",
     lastName:"Doe",
@@ -15,10 +15,7 @@ auth.generateToken({
     expiresIn:60000,
 });
 
-app.use(auth.verifyToken({
-    isMiddleware: true,
-    key:"authorization"
-}))
+app.use(auth.authenticate())
 
 
 app.get("/",(req, res, next) => {

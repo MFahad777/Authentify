@@ -20,10 +20,10 @@ import { Authentication } from 'secure-tokenize';
 
 ## Creating Instance
 
-Create an instance of the Authentication class by providing the JWT secret key:
-
+Create an instance of the Authentication class by providing the JWT secret key.
+Can also select authentication method which is currently set to `jwt` which is default as well.
 ```typescript
-const auth = new Authentication('your_jwt_secret_key');
+const auth = new Authentication('your_jwt_secret_key',"jwt");
 ```
 
 ## Generate Token
@@ -38,19 +38,13 @@ const token = auth.generateToken(user);
 
 ## Verify Token
 
-Verify a JWT token either directly or as middleware:
-
-```typescript
-// Direct verification
-const verifiedData = auth.verifyToken({ token: 'your_token', isMiddleware: false });
-```
-Can also insert it as a middleware in express application by passing isMiddleware set to true
+Set middleware in express application.
 
 ```typescript
 const app = require("express")();
 
-// As middleware
-app.use('/protected', auth.verifyToken({ isMiddleware: true }),(request, response, next) => {
+// Middleware
+app.use('/protected', auth.authenticate(),(request, response, next) => {
     
     // This will contain user data 
     req.auth;

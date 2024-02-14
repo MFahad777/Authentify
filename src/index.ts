@@ -3,27 +3,34 @@ import jwt, {
     VerifyOptions
 } from 'jsonwebtoken';
 
+import {Handler, NextFunction} from "express";
+
 interface User {
     [key: string]: any;
 }
 
 interface VerifyData {
-    token?: string,
-    isMiddleware: boolean,
     key?: string,
-    options?: VerifyOptions
+    options?: VerifyOptions,
+    req: any
 }
+
+interface AuthenticateOptions extends Omit<VerifyData, 'isMiddleware' | 'token' | 'req'> {}
+
+type AuthMethod = "JWT" | "jwt";
 
 export class Authentication {
     private readonly secretKey: string;
+    private readonly authMethod: string;
 
-    constructor(jwtSecretKey: string) {
+    constructor(jwtSecretKey: string, authMethod : AuthMethod = "jwt") {
 
         if (!Boolean(jwtSecretKey)) {
             throw new Error("secret key is required");
         }
 
         this.secretKey = jwtSecretKey;
+        this.authMethod = authMethod;
     }
 
     generateToken(user: User, options?: SignOptions): string {
@@ -34,31 +41,47 @@ export class Authentication {
         return token?.split("Bearer ")?.[1];
     }
 
-    verifyToken(data: VerifyData): jwt.JwtPayload | Function | string {
+    // Only For MiddleWare Purpose
+    authenticate(authOptions : AuthenticateOptions = {}) : Function {
 
         const {
-            token,
+            key = "authorization",
+            options = {}
+        } = authOptions
+
+        return (req : any, res: Response, next : NextFunction) : any => {
+
+            switch (this.authMethod) {
+                case "jwt":
+                case "JWT":
+                    req.auth = this.verifyToken({
+                        key,
+                        options,
+                        req
+                    });
+                    next();
+                    break;
+                default:
+                    next()
+            }
+        }
+
+    }
+
+    private verifyToken(data : VerifyData): any {
+
+        const {
             key,
-            isMiddleware,
-            options
+            options,
+            req
         } = data
 
+        const token = this.getBearerToken(req.headers[key ?? "authorization"]);
 
-        if (!isMiddleware && token !== undefined) {
-            return jwt.verify(token, this.secretKey, options);
+        if (!Boolean(token)) {
+            throw new Error("Bearer Token Is Required");
         }
 
-        return (req: any, res: any, next: any) => {
-
-            const token = this.getBearerToken(req.headers[key ?? "Authorization"]);
-
-            if (!Boolean(token)) {
-                throw new Error("Bearer Token Is Required");
-            }
-
-            req.auth = jwt.verify(token, this.secretKey, options); // set verified data
-
-            next();
-        }
+        return jwt.verify(token, this.secretKey, options); // set verified data
     }
 }
