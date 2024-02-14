@@ -7,7 +7,7 @@ This package provides utilities for user authentication using JSON Web Tokens (J
 Install the package using npm:
 
 ```bash
-npm install authentication-package
+npm install secure-tokenize
 ```
 
 ## Usage
@@ -15,7 +15,7 @@ npm install authentication-package
 Import the `Authentication` class from the package:
 
 ```typescript
-import { Authentication } from 'authentication-package';
+import { Authentication } from 'secure-tokenize';
 ```
 
 ## Creating Instance
