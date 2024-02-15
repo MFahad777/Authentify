@@ -51,7 +51,14 @@ Generate a JWT token for a user object:
 ```typescript
 const user = { userId: 123, username: 'john_doe' }; // Sample
 
-const token = auth.generateToken(user);
+const token = auth.generateToken({
+  user,
+  jwt:{
+     options:{
+         expiresIn:6000
+     } 
+  }
+});
 ```
 
 ### Verify Token
