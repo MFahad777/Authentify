@@ -40,7 +40,10 @@ const Authentication = require("secure-tokenize");
 
 Create an instance of the Authentication class by providing the JWT secret key.
 ```typescript
-const auth = new Authentication('your_jwt_secret_key',"jwt");
+const auth = new Authentication({
+  jwtSecretKey:"jwt_secret_key",
+  authMethod:"jwt",
+});
 ```
 
 Generate a JWT token for a user object:
