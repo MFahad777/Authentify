@@ -21,7 +21,12 @@ interface InitOptions {
     facebookAppSecret? : string
     url?: string,
     callbackUrl?: string,
-    facebookAPIVersion?: string
+    facebookAPIVersion?: string,
+    googleAppClientId? : string,
+    googleClientSecret?: string,
+    googleRedirectURL?: string,
+    googleAPIVersion?: string
+    googleUserFieldsToGet?: string
 }
 
 interface FaceBookOptions {
@@ -36,12 +41,15 @@ interface GenerateTokenOptions {
     faceBook:{
         options: FaceBookOptions,
         code: string
+    },
+    google : {
+        code: string
     }
 }
 
 interface AuthenticateOptions extends Omit<VerifyData, 'req'> {}
 
-type AuthMethod = "JWT" | "jwt" | "facebook" | "FACEBOOK";
+type AuthMethod = "JWT" | "jwt" | "facebook" | "FACEBOOK" | "google" | "GOOGLE";
 
 export class Authentication {
     private readonly secretKey: string;
@@ -50,7 +58,12 @@ export class Authentication {
     private readonly facebookAppSecret: string | undefined;
     private readonly facebookAppId: string | undefined;
     private readonly callbackUrl: string | undefined;
-    private readonly facebookAPIVersion: string | unknown;
+    private readonly facebookAPIVersion: string | undefined;
+    private readonly googleAppClientId : string | undefined;
+    private readonly googleClientSecret: string | undefined;
+    private readonly googleRedirectURL: string | undefined;
+    private readonly googleAPIVersion: string | undefined;
+    private readonly googleUserFieldsToGet: string | undefined;
 
     constructor(options: InitOptions) {
 
@@ -61,10 +74,19 @@ export class Authentication {
         this.secretKey = options.jwtSecretKey;
         this.authMethod = options.authMethod;
         this.url = options.url;
+
+        // FaceBook
         this.facebookAppSecret = options.facebookAppSecret;
         this.facebookAppId = options.facebookAppId;
         this.callbackUrl = options?.callbackUrl ?? "/auth/facebook/callback";
-        this.facebookAPIVersion = options.facebookAPIVersion ?? "v19.0";
+        this.facebookAPIVersion = options?.facebookAPIVersion ?? "v19.0";
+
+        // Google
+        this.googleAppClientId = options.googleAppClientId;
+        this.googleClientSecret = options.googleClientSecret;
+        this.googleRedirectURL = options.googleRedirectURL;
+        this.googleAPIVersion = options?.googleAPIVersion ?? "v2";
+        this.googleUserFieldsToGet = options?.googleUserFieldsToGet ?? "openid email profile";
     }
 
     async generateToken(generateTokenOptions: GenerateTokenOptions): Promise<string> {
@@ -75,7 +97,7 @@ export class Authentication {
 
         const user = generateTokenOptions?.user;
 
-        const code = generateTokenOptions?.faceBook?.code;
+        const code = generateTokenOptions?.faceBook?.code ?? generateTokenOptions?.google?.code;
 
         switch (this.authMethod) {
             case "jwt":
@@ -85,6 +107,10 @@ export class Authentication {
             case "FACEBOOK":
                 const userData = await this.handleFacebookAuthentication(code,faceBookOptions);
                 return jwt.sign(userData, this.secretKey, jwtOptions);
+            case "google":
+            case "GOOGLE":
+                const googleUserData = await this.handleGoogleAuthentication(code);
+                return jwt.sign(googleUserData, this.secretKey, jwtOptions);
             default:
                 throw new Error(`${this.authMethod} is not accepted`);
         }
@@ -120,6 +146,20 @@ export class Authentication {
         return res.redirect(fbAPIUrl);
     }
 
+    googleRedirect(req: Request, res: Response, next : NextFunction) : void {
+
+        const params = {
+            client_id: this.googleAppClientId,
+            redirect_uri: this.googleRedirectURL,
+            response_type: 'code',
+            scope: this.googleUserFieldsToGet, // Add required scopes
+        };
+
+        const url = `https://accounts.google.com/o/oauth2/${this.googleAPIVersion}/auth?client_id=${params.client_id}&redirect_uri=${params.redirect_uri}&response_type=code&scope=${params.scope}`;
+
+        res.redirect(url);
+    }
+
     private async handleFacebookAuthentication(code : string, faceBookOptions : FaceBookOptions): Promise<string> {
         try {
             if (!code) {
@@ -142,6 +182,41 @@ export class Authentication {
         } catch (error) {
             throw error
         }
+    }
+
+    private async handleGoogleAuthentication(code : string) : Promise<string> {
+
+        if (!code) {
+            throw new Error(`code is not provided`);
+        }
+
+        // Exchange authorization code for access token
+        const tokenParams = {
+            code,
+            client_id: this.googleAppClientId,
+            client_secret: this.googleClientSecret,
+            redirect_uri: this.googleRedirectURL,
+            grant_type: 'authorization_code',
+        };
+
+        const tokenResponse = await axios.post('https://oauth2.googleapis.com/token', tokenParams, {
+            headers: {
+                'Content-Type': 'application/x-www-form-urlencoded',
+            },
+        });
+
+        return tokenResponse.data;
+    }
+
+    async getGoogleUserProfile(access_token : string, personFields: string = "names") {
+        const userData = await axios.get(`https://people.googleapis.com/v1/people/me?personFields=${personFields}`,
+            {
+                headers:{
+                    Authorization:`Bearer ${access_token}`
+                }
+            });
+
+        return userData.data;
     }
 
     private verifyToken(data : VerifyData): any {

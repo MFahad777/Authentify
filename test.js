@@ -6,18 +6,16 @@ const app = exp();
 
 const auth = new Authentication({
     jwtSecretKey:"AveryMuchSecretThatNoOneCanHack",
-    authMethod:"facebook",
-    facebookAppId:"<app_id>",
-    facebookAppSecret:"<secret_id>",
-    url:"http://localhost:3000",
-    callbackUrl:"",
-    facebookAPIVersion:"v19.0"
+    authMethod:"google",
+    googleAppClientId:"<GOOGLE_APP_CLIENT_ID>",
+    googleClientSecret:"<GOOGLE_CLIENT_SECRET>",
+    googleRedirectURL:"http://localhost:3000/auth/google/callback"
 });
 
 // Route for initiating the authentication process
-app.get('/auth/facebook', auth.facebookRedirect);
+app.get('/auth/google', auth.googleRedirect.bind(auth));
 
-app.get("/auth/facebook/callback", async (req,res,next) => {
+app.get("/auth/google/callback", async (req,res,next) => {
 
     const token = await auth.generateToken({
         jwt:{
@@ -25,12 +23,12 @@ app.get("/auth/facebook/callback", async (req,res,next) => {
                 expiresIn:6000
             }
         },
-        faceBook:{
-            code:req.query.code
+        google:{
+            code: req.query.code
         }
     })
 
-    res.redirect(`/dashboard?token=${token}`)
+    res.send(token)
 
 });
 
