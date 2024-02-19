@@ -204,7 +204,7 @@ export class Authentication {
             const scope = faceBookOptions?.fields ?? "id,name,email";
 
             const tokenResponse = await axios.get(
-                `https://graph.facebook.com/v19.0/oauth/access_token?client_id=${this.facebookAppId}&redirect_uri=${this.url}${this.callbackUrl}&client_secret=${this.facebookAppSecret}&code=${code}`
+                `https://graph.facebook.com/${this.facebookAPIVersion}/oauth/access_token?client_id=${this.facebookAppId}&redirect_uri=${this.url}${this.callbackUrl}&client_secret=${this.facebookAppSecret}&code=${code}`
             );
 
             const accessToken = tokenResponse.data.access_token;
