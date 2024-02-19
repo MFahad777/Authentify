@@ -18,6 +18,8 @@ This package provides utilities for user authentication using JSON Web Tokens (J
   - [Creating Instance](#creating-instance-2)
   - [Setting Up Routes](#setting-up-routes)
   - [Getting Authenticated Data](#getting-authenticated-data)
+- [Others](#others)
+  - [Custom Function When Using `auth.authenticate()`.](#custom-function-when-using-authauthenticate)
 - [License](#license)
 
 <!-- END doctoc generated TOC please keep comment here to allow auto update -->
