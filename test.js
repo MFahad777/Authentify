@@ -6,45 +6,60 @@ const app = exp();
 
 const auth = new Authentication({
     jwtSecretKey:"AveryMuchSecretThatNoOneCanHack",
-    authMethod:"google",
-    googleAppClientId:"<GOOGLE_APP_CLIENT_ID>",
-    googleClientSecret:"<GOOGLE_CLIENT_SECRET>",
-    googleRedirectURL:"http://localhost:3000/auth/google/callback"
+    authMethod:"jwt",
 });
 
-// Route for initiating the authentication process
-app.get('/auth/google', auth.googleRedirect.bind(auth));
+auth.generateToken({
+    user:{
+        id:1,
+        name:"John",
+        lastName:"doe"
+    },
+}).then(console.log)
 
-app.get("/auth/google/callback", async (req,res,next) => {
+// // Route for initiating the authentication process
+// app.get('/auth/google', auth.googleRedirect.bind(auth));
+//
+// app.get("/auth/google/callback", async (req,res,next) => {
+//
+//     const token = await auth.generateToken({
+//         jwt:{
+//             options:{
+//                 expiresIn:6000
+//             }
+//         },
+//         google:{
+//             code: req.query.code
+//         }
+//     })
+//
+//     res.send(token)
+//
+// });
 
-    const token = await auth.generateToken({
-        jwt:{
-            options:{
-                expiresIn:6000
+// app.get("/dashboard",(req, res, next) => {
+//
+//     res.send(`
+//        <h1>${req.query.token}</h1>
+//     `)
+//
+// })
+
+app.get("/protectedRoute",auth.authenticate({
+    customFn: function (result) {
+        return {
+            keyToSetAgainst:"userData",
+            data:{
+                ...result,
+                timeStamp: new Date()
             }
-        },
-        google:{
-            code: req.query.code
         }
-    })
+    },
+}),(req, res, next) => {
 
-    res.send(token)
 
-});
+    res.json(req.userData);
 
-app.get("/dashboard",(req, res, next) => {
-
-    res.send(`
-       <h1>${req.query.token}</h1>
-    `)
-
-})
-
-app.get("/protectedRoute",auth.authenticate(),(req, res, next) => {
-
-    res.json({
-        data: req.auth
-    });
 })
 
 app.listen(3000,() => console.log("LISTENING"))

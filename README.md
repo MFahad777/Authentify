@@ -18,6 +18,8 @@ This package provides utilities for user authentication using JSON Web Tokens (J
   - [Creating Instance](#creating-instance-2)
   - [Setting Up Routes](#setting-up-routes)
   - [Getting Authenticated Data](#getting-authenticated-data)
+- [Others](#others)
+  - [Custom Function When Using `auth.authenticate()`.](#custom-function-when-using-authauthenticate)
 - [License](#license)
 
 <!-- END doctoc generated TOC please keep comment here to allow auto update -->
@@ -213,6 +215,30 @@ app.get("/protectedRoute",auth.authenticate(), async (req, res, next) => {
     
     res.status(200).send();
 })
+```
+
+## Others
+
+### Custom Function When Using `auth.authenticate()`.
+
+```typescript
+
+// In result you will get the verified data from the token.
+
+const customFn = function (result) {
+  return {
+    keyToSetAgainst:"userData", // this will be the key set to request object. (Required)
+    data:{                      // Modified data along with the verified data. (Optional)
+      ...result,
+      timeStamp: new Date()
+    }
+  }
+}
+
+app.get("/protectedRoute",auth.authenticate({customFn}),(req, res, next) => {
+  res.json(req.userData);
+})
+
 ```
 
 ## License
