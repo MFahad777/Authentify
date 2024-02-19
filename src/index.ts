@@ -47,7 +47,14 @@ interface GenerateTokenOptions {
     }
 }
 
-interface AuthenticateOptions extends Omit<VerifyData, 'req'> {}
+type TCustomFun = (result : any) => {
+    keyToSetAgainst : string,
+    data? : any
+}
+
+interface AuthenticateOptions extends Omit<VerifyData, 'req'> {
+    customFn?: TCustomFun
+}
 
 type AuthMethod = "JWT" | "jwt" | "facebook" | "FACEBOOK" | "google" | "GOOGLE";
 
@@ -126,9 +133,37 @@ export class Authentication {
         const {
             key,
             options,
+            customFn
         } = authOptions
 
         return (req : any, res: Response, next : NextFunction) : any => {
+
+            if (customFn) {
+
+                const verifiedResult = this.verifyToken({
+                    key,
+                    options,
+                    req
+                });
+
+                const {
+                    keyToSetAgainst,
+                    data
+                } : {
+                    keyToSetAgainst : string,
+                    data?: any
+                } = customFn(verifiedResult);
+
+                if (!keyToSetAgainst) {
+                    throw new Error(`User defined function must return a key to set the verified data against`);
+                }
+
+                req[keyToSetAgainst] = data ?? verifiedResult;
+
+                next()
+                return;
+            }
+
             req.auth = this.verifyToken({
                 key,
                 options,

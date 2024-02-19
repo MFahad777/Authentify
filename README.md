@@ -215,6 +215,30 @@ app.get("/protectedRoute",auth.authenticate(), async (req, res, next) => {
 })
 ```
 
+## Others
+
+### Custom Function When Using `auth.authenticate()`.
+
+```typescript
+
+// In result you will get the verified data from the token.
+
+const customFn = function (result) {
+  return {
+    keyToSetAgainst:"userData", // this will be the key set to request object. (Required)
+    data:{                      // Modified data along with the verified data. (Optional)
+      ...result,
+      timeStamp: new Date()
+    }
+  }
+}
+
+app.get("/protectedRoute",auth.authenticate({customFn}),(req, res, next) => {
+  res.json(req.userData);
+})
+
+```
+
 ## License
 
 This project is licensed under the MIT License - see the LICENSE.md file for details.
