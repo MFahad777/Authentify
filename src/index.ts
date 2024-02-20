@@ -138,13 +138,13 @@ export class Authentication {
 
         return (req : any, res: Response, next : NextFunction) : any => {
 
-            if (customFn) {
+            const verifiedResult = this.verifyToken({
+                key,
+                options,
+                req
+            });
 
-                const verifiedResult = this.verifyToken({
-                    key,
-                    options,
-                    req
-                });
+            if (customFn) {
 
                 const {
                     keyToSetAgainst,
@@ -164,11 +164,8 @@ export class Authentication {
                 return;
             }
 
-            req.auth = this.verifyToken({
-                key,
-                options,
-                req
-            });
+            req.auth = verifiedResult;
+
             next();
         }
 
@@ -198,7 +195,7 @@ export class Authentication {
     private async handleFacebookAuthentication(code : string, faceBookOptions : FaceBookOptions): Promise<string> {
         try {
             if (!code) {
-                throw new Error(`FaceBook is not provided`);
+                throw new Error(`FaceBook Code Is Not Provided`);
             }
 
             const scope = faceBookOptions?.fields ?? "id,name,email";
